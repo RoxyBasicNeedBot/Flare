@@ -122,25 +122,25 @@ class FlareBuilder(activity: Activity) {
         if (activity.isFinishing || activity.isDestroyed) return
 
         val defaults = FlareConfig.get()
-        val message = builder.build(defaults)
+        val flareMessage = builder.build(defaults)
 
         // Queue-system listener wrapper for android window manager
         val listener = object : FlareQueue.FlareQueueListener {
-            override fun onShowMessage(msg: FlareMessage) {
-                if (msg.id == message.id) {
+            override fun onShowMessage(message: FlareMessage) {
+                if (message.id == flareMessage.id) {
                     val act = activityRef.get()
                     if (act != null && !act.isFinishing && !act.isDestroyed) {
                         FlareWindowManager.show(
                             activity = act,
-                            message = msg,
+                            message = message,
                             onActionClicked = {
-                                msg.action?.onClick?.invoke()
-                                if (msg.action?.dismissOnAction == true) {
-                                    FlareWindowManager.dismiss(msg.id)
+                                message.action?.onClick?.invoke()
+                                if (message.action?.dismissOnAction == true) {
+                                    FlareWindowManager.dismiss(message.id)
                                 }
                             },
                             onDismissed = {
-                                FlareWindowManager.dismiss(msg.id)
+                                FlareWindowManager.dismiss(message.id)
                             }
                         )
                     }
@@ -148,9 +148,9 @@ class FlareBuilder(activity: Activity) {
                 }
             }
 
-            override fun onDismissMessage(msg: FlareMessage) {
-                if (msg.id == message.id) {
-                    FlareWindowManager.dismiss(msg.id)
+            override fun onDismissMessage(message: FlareMessage) {
+                if (message.id == flareMessage.id) {
+                    FlareWindowManager.dismiss(message.id)
                     FlareQueue.removeListener(this)
                 }
             }
@@ -158,6 +158,6 @@ class FlareBuilder(activity: Activity) {
 
         // Add listener and enqueue
         FlareQueue.addListener(listener)
-        FlareQueue.enqueue(message, defaults.queueMode)
+        FlareQueue.enqueue(flareMessage, defaults.queueMode)
     }
 }

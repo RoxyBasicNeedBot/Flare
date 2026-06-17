@@ -72,6 +72,7 @@ fun FlareAlert(
 ) {
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
+    val action = message.action
 
     // Swipe to dismiss state variables
     var dragOffsetX by remember { mutableFloatStateOf(0f) }
@@ -113,11 +114,10 @@ fun FlareAlert(
     }
 
     // Initialize haptic feedback on show
+    val view = LocalView.current
     LaunchedEffect(message.id) {
         if (message.haptic) {
             try {
-                // Safe haptic feedback trigger
-                val view = LocalView.current
                 view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
             } catch (e: Exception) {
                 // Fallback
@@ -260,7 +260,7 @@ fun FlareAlert(
                 )
 
                 // 3. Action Button
-                if (message.action != null) {
+                if (action != null) {
                     Spacer(modifier = Modifier.width(12.dp))
                     Box(
                         modifier = Modifier
@@ -274,7 +274,7 @@ fun FlareAlert(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = message.action.label,
+                            text = action.label,
                             color = contentColor,
                             fontSize = 13.sp,
                             fontFamily = fontFamily,
