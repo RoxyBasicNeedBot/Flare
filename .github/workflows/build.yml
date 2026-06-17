@@ -25,8 +25,5 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Build Library Modules
-        run: ./gradlew :flare-core:assemble :flare-android:assembleRelease :flare-compose:assembleRelease --no-daemon
-
-      - name: Build Sample App
-        run: ./gradlew :app:assembleDebug --no-daemon
+      - name: Build and Compile All Variants (Debug & Release)
+        run: ./gradlew assembleDebug assembleRelease --no-daemon
