@@ -96,8 +96,9 @@ class FlareView(
         }
 
         // 5. Action Button Setup
-        if (message.action != null) {
-            actionButton.text = message.action.label
+        val action = message.action
+        if (action != null) {
+            actionButton.text = action.label
             actionButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             actionButton.typeface = textView.typeface
             actionButton.isAllCaps = false
@@ -125,7 +126,7 @@ class FlareView(
         // Add to Content Layout
         contentLayout.addView(iconView)
         contentLayout.addView(textView)
-        if (message.action != null) {
+        if (action != null) {
             contentLayout.addView(actionButton)
         }
 

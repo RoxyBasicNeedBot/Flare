@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.composeCompiler)
     `maven-publish`
 }
@@ -35,6 +34,7 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.fromTarget(libs.versions.android.jvm.get()))
+        freeCompilerArgs.add("-opt-in=com.roxy.flare.FlareInternalApi")
     }
 }
 
