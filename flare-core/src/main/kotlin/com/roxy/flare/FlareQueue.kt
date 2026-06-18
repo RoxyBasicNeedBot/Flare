@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * Thread-safe alert queue manager.
  */
 object FlareQueue {
+    private val stateLock = Any()
     private val queue = ConcurrentLinkedQueue<FlareMessage>()
     private val listeners = mutableListOf<FlareQueueListener>()
 
@@ -13,8 +14,8 @@ object FlareQueue {
     private var currentMessage: FlareMessage? = null
 
     interface FlareQueueListener {
-        fun onShowMessage(message: FlareMessage)
-        fun onDismissMessage(message: FlareMessage)
+        fun onShowMessage(message: FlareMessage) {}
+        fun onDismissMessage(message: FlareMessage) {}
     }
 
     fun addListener(listener: FlareQueueListener) {
@@ -37,50 +38,81 @@ object FlareQueue {
      * Add a message to the queue, or replace the current one depending on settings.
      */
     fun enqueue(message: FlareMessage, mode: FlareQueueMode) {
-        if (mode == FlareQueueMode.REPLACE) {
-            val current = currentMessage
-            if (current != null) {
-                currentMessage = null
-                notifyDismiss(current)
+        val toDismissList = mutableListOf<FlareMessage>()
+        var toShow: FlareMessage? = null
+
+        synchronized(stateLock) {
+            if (mode == FlareQueueMode.REPLACE) {
+                currentMessage?.let {
+                    currentMessage = null
+                    toDismissList.add(it)
+                }
+                var next = queue.poll()
+                while (next != null) {
+                    toDismissList.add(next)
+                    next = queue.poll()
+                }
+                currentMessage = message
+                toShow = message
+            } else {
+                queue.add(message)
+                toShow = processNextState()
             }
-            queue.clear()
-            currentMessage = message
-            notifyShow(message)
-        } else {
-            queue.add(message)
-            processNext()
         }
+
+        toDismissList.forEach { notifyDismiss(it) }
+        toShow?.let { notifyShow(it) }
     }
 
     /**
      * Mark the current message as finished and show the next one in the queue.
      */
     fun onMessageDismissed(message: FlareMessage) {
-        if (currentMessage?.id == message.id) {
-            currentMessage = null
-            processNext()
+        var toDismiss: FlareMessage? = null
+        var toShow: FlareMessage? = null
+
+        synchronized(stateLock) {
+            if (currentMessage?.id == message.id) {
+                currentMessage = null
+                toDismiss = message
+                toShow = processNextState()
+            }
         }
+
+        toDismiss?.let { notifyDismiss(it) }
+        toShow?.let { notifyShow(it) }
     }
 
     /**
      * Clear all pending messages in the queue and dismiss the current one.
      */
     fun clear() {
-        queue.clear()
-        val current = currentMessage
-        if (current != null) {
-            currentMessage = null
-            notifyDismiss(current)
+        val toDismissList = mutableListOf<FlareMessage>()
+
+        synchronized(stateLock) {
+            var next = queue.poll()
+            while (next != null) {
+                toDismissList.add(next)
+                next = queue.poll()
+            }
+            currentMessage?.let {
+                currentMessage = null
+                toDismissList.add(it)
+            }
         }
+
+        toDismissList.forEach { notifyDismiss(it) }
     }
 
-    private fun processNext() {
-        if (currentMessage != null) return
-
-        val next = queue.poll()
-        if (next != null) {
-            currentMessage = next
-            notifyShow(next)
+    private fun processNextState(): FlareMessage? {
+        synchronized(stateLock) {
+            if (currentMessage != null) return null
+            val next = queue.poll()
+            if (next != null) {
+                currentMessage = next
+                return next
+            }
+            return null
         }
     }
 

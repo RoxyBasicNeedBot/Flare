@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     // Zero dependencies (pure Kotlin library)
+    testImplementation(libs.junit)
 }
 
 publishing {

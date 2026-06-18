@@ -103,4 +103,14 @@ class FlareHostState {
         continuations.values.forEach { it(FlareResult.Dismissed) }
         continuations.clear()
     }
+
+    /**
+     * Release listeners and resolve pending continuations to prevent memory leaks and hung coroutines.
+     */
+    fun release() {
+        FlareQueue.removeListener(queueListener)
+        _currentMessage.value = null
+        continuations.values.forEach { it(FlareResult.Dismissed) }
+        continuations.clear()
+    }
 }

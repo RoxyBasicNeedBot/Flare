@@ -70,21 +70,6 @@ object Flare {
             }
         })
     }
-
-    init {
-        // Wire up the queue listener to window manager
-        FlareQueue.addListener(object : FlareQueue.FlareQueueListener {
-            override fun onShowMessage(message: FlareMessage) {
-                // Display the message in the foreground activity
-                // Finding the current activity context can be tricky, but since we build via builder,
-                // the builder has a weak reference to the activity!
-            }
-
-            override fun onDismissMessage(message: FlareMessage) {
-                FlareWindowManager.dismiss(message.id)
-            }
-        })
-    }
 }
 
 /**
@@ -140,11 +125,10 @@ class FlareBuilder(activity: Activity) {
                                 }
                             },
                             onDismissed = {
-                                FlareWindowManager.dismiss(message.id)
+                                    FlareWindowManager.dismiss(message.id)
                             }
                         )
                     }
-                    FlareQueue.removeListener(this)
                 }
             }
 

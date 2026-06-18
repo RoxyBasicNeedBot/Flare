@@ -1,6 +1,7 @@
 package com.roxy.flare.compose
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 
 /**
@@ -8,5 +9,11 @@ import androidx.compose.runtime.remember
  */
 @Composable
 fun rememberFlareHostState(): FlareHostState {
-    return remember { FlareHostState() }
+    val state = remember { FlareHostState() }
+    DisposableEffect(state) {
+        onDispose {
+            state.release()
+        }
+    }
+    return state
 }

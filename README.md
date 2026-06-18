@@ -70,13 +70,13 @@ Then, include the desired Flare modules in your application's `build.gradle.kts`
 ```kotlin
 dependencies {
     // Core models & queue manager (automatically transitively resolved)
-    implementation("com.github.RoxyBasicNeedBot.Flare:flare-core:v1.0.6")
+    implementation("com.github.RoxyBasicNeedBot.Flare:flare-core:v1.0.7")
 
     // For Traditional Android View (XML Layouts) System
-    implementation("com.github.RoxyBasicNeedBot.Flare:flare-android:v1.0.6")
+    implementation("com.github.RoxyBasicNeedBot.Flare:flare-android:v1.0.7")
 
     // For Jetpack Compose UI
-    implementation("com.github.RoxyBasicNeedBot.Flare:flare-compose:v1.0.6")
+    implementation("com.github.RoxyBasicNeedBot.Flare:flare-compose:v1.0.7")
 }
 ```
 

@@ -1,6 +1,8 @@
 package com.roxy.flare.android
 
 import android.app.Activity
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -15,8 +17,24 @@ object FlareWindowManager {
 
     private val activeViews = mutableMapOf<String, FlareView>()
     private val activeProgressAnimators = mutableMapOf<String, FlareProgressAnimator>()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     fun show(
+        activity: Activity,
+        message: FlareMessage,
+        onActionClicked: () -> Unit,
+        onDismissed: () -> Unit
+    ) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            showInternal(activity, message, onActionClicked, onDismissed)
+        } else {
+            mainHandler.post {
+                showInternal(activity, message, onActionClicked, onDismissed)
+            }
+        }
+    }
+
+    private fun showInternal(
         activity: Activity,
         message: FlareMessage,
         onActionClicked: () -> Unit,
@@ -76,14 +94,9 @@ object FlareWindowManager {
             // After anim finishes, check if we should auto-dismiss
             val durationMillis = message.duration.durationMillis
             if (durationMillis > 0) {
-                val progressView = flareView.findViewById<android.view.View>(
-                    flareView.context.resources.getIdentifier("progress_bar", "id", flareView.context.packageName)
-                ) ?: flareView.getChildAt(0).let { rootCard ->
-                    // Fallback to finding the progress view from card container
-                    if (rootCard is ViewGroup && rootCard.childCount > 1) rootCard.getChildAt(1) else null
-                }
+                val progressView = flareView.progressBarView
 
-                if (progressView != null && message.showProgressBar) {
+                if (message.showProgressBar) {
                     // Create progress animator
                     val progressAnimator = FlareProgressAnimator(progressView, durationMillis) {
                         dismiss(message.id)
@@ -106,6 +119,16 @@ object FlareWindowManager {
     }
 
     fun dismiss(id: String) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            dismissInternal(id)
+        } else {
+            mainHandler.post {
+                dismissInternal(id)
+            }
+        }
+    }
+
+    private fun dismissInternal(id: String) {
         val flareView = activeViews[id] ?: return
         
         // Cancel progress animators
@@ -126,7 +149,17 @@ object FlareWindowManager {
     }
 
     fun dismissAll() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            dismissAllInternal()
+        } else {
+            mainHandler.post {
+                dismissAllInternal()
+            }
+        }
+    }
+
+    private fun dismissAllInternal() {
         val keys = activeViews.keys.toList()
-        keys.forEach { dismiss(it) }
+        keys.forEach { dismissInternal(it) }
     }
 }

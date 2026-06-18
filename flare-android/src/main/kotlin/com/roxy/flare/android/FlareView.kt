@@ -230,6 +230,8 @@ class FlareView(
         }
     }
 
+    val progressBarView: View get() = progressBar
+
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         // Stop animation if it's a loading spinner
