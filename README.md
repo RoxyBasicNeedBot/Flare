@@ -1,19 +1,54 @@
-# ⚡️ Flare
+# ⚡ Flare
 
 [![JitPack](https://jitpack.io/v/RoxyBasicNeedBot/Flare.svg)](https://jitpack.io/#RoxyBasicNeedBot/Flare)
-[![Min SDK](https://img.shields.io/badge/Min%20SDK-24-blue.svg)](https://developer.android.com/about/dashboards)
-[![Target SDK](https://img.shields.io/badge/Target%20SDK-36-purple.svg)](https://developer.android.com/about/dashboards)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.3%2B-blue.svg)](https://kotlinlang.org)
+[![Build & Verify](https://github.com/RoxyBasicNeedBot/Flare/actions/workflows/build.yml/badge.svg)](https://github.com/RoxyBasicNeedBot/Flare/actions/workflows/build.yml)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.3%2B-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Min SDK](https://img.shields.io/badge/Min%20SDK-24-1E88E5.svg)](https://developer.android.com/about/dashboards)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-> **"Expressive alerts for Android — crafted by Roxy."**
-> A highly customizable, production-grade alert and custom toast library for Android. Flare provides completely separate, native integration modules for **Jetpack Compose** and the **traditional Android View** system, engineered with zero XML resource overhead and butter-smooth spring physics animations.
+**Alerts and toasts for Android, done right.**
+
+Android's built-in `Toast` can't be styled, can't queue, can't show an action button, and is increasingly restricted by the OS. Flare replaces it with a fluent, fully customizable alert system — built natively for both the **View system** and **Jetpack Compose**, sharing one platform-agnostic core.
+
+```
+Flare.with(activity)
+    .type(FlareType.SUCCESS)
+    .message("Payment received")
+    .show()
+```
 
 ---
 
-## 🗺️ Architectural Topology
+## Contents
 
-Flare is designed as a multi-module library keeping the **Core** logic entirely platform-agnostic, paving the way for future Kotlin Multiplatform (KMP) support.
+- [Features](#features)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration Reference](#configuration-reference)
+- [How It Works](#how-it-works)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Features
+
+- 🎯 **Two native UIs, one core** — `flare-android` for the traditional View system, `flare-compose` for Jetpack Compose. Pick one or both; everything shares the same `flare-core` queue and config.
+- 🔄 **Queue or replace** — `FlareQueueMode.ENQUEUE` plays alerts back-to-back in order; `FlareQueueMode.REPLACE` instantly swaps in a new alert and drops whatever was pending.
+- 🖐️ **Real swipe-to-dismiss** — velocity-aware fling gestures with a spring-back snap if the swipe doesn't clear the threshold.
+- 🌓 **Theme-aware** — `FlareTheme.AUTO` follows the system's dark/light setting in real time, or pin it with `LIGHT` / `DARK`.
+- 📳 **Haptics with correct fallbacks** — modern `VibrationEffect` on API 26+, with a clean legacy path down to the min SDK of 24.
+- ⏱️ **Countdown progress bars** — an optional draining bar synced exactly to the alert's display duration.
+- 📐 **Edge-to-edge aware** — automatically pads around status bars, nav bars, and display cutouts via `WindowInsetsCompat`, so alerts never sit under system chrome.
+- 🧩 **Pure Kotlin core** — `flare-core` has zero Android dependencies, keeping the door open for future Kotlin Multiplatform support.
+
+---
+
+## Architecture
+
+Flare is split into three modules so you only pull in what you need.
 
 ```mermaid
 graph TD
@@ -22,10 +57,10 @@ graph TD
     classDef compose fill:#E1F5FE,stroke:#03A9F4,stroke-width:2px;
     classDef app fill:#FFF3E0,stroke:#FF9800,stroke-width:2px;
 
-    Core[flare-core<br>Pure Kotlin models, Config, Thread-safe Queue]:::core
-    Android[flare-android<br>View system overlay, DecorView, SpringAnimation]:::android
-    Compose[flare-compose<br>State-driven UI, Compose Transitions, Canvas Drawing]:::compose
-    App[Target Application]:::app
+    Core[flare-core<br/>Models, config, thread-safe queue]:::core
+    Android[flare-android<br/>DecorView overlay, builder API]:::android
+    Compose[flare-compose<br/>FlareHost, suspend-based API]:::compose
+    App[Your app]:::app
 
     Core --> Android
     Core --> Compose
@@ -33,26 +68,13 @@ graph TD
     Compose --> App
 ```
 
----
-
-## 🌟 Features at a Glance
-
-* 📦 **Zero-XML Footprint** — Built entirely with programmatic vector paths (Views) and Canvas drawing (Compose). Keeps library footprint under **2 KB** binary size to avoid asset bloat.
-* ⚡ **Physics-Based Spring Animations** — Powered by `SpringAnimation` (for Views) and state-driven spring specs (for Compose) to deliver buttery-smooth, organic transition curves.
-* 🔄 **Intelligent Queue Management** — Backed by a thread-safe `ConcurrentLinkedQueue`. Features two dispatch behaviors:
-  * `FlareQueueMode.QUEUE`: Orders alerts sequentially in a FIFO queue.
-  * `FlareQueueMode.REPLACE`: Instantly overrides the active alert and purges pending ones.
-* 🖐️ **Decelerating Swipe Gestures** — Fling-to-dismiss gesture handling with velocity calculation, spring-driven snapping, or momentum dismissal.
-* 🌓 **Dynamic Theme Engine** — Real-time dark/light system state synchronization with fallback overrides for customized styling.
-* 📱 **Haptic Precision** — Integrated tactile feedback wrapper invoking modern `VibrationEffect` patterns with clean legacy fallbacks.
-* ⏱️ **Countdown Progress Bars** — Horizontal indicator bar draining smoothly relative to the duration.
-* 📐 **Edge-to-Edge Integration** — Automatic system inset adjustments matching `WindowInsetsCompat` for status bars, navigation bars, and display cutouts.
+`flare-core` owns a single source of truth — a `FlareQueue` singleton that decides what shows next. Both UI modules just listen to it and render whatever it says is current; they never talk to each other directly.
 
 ---
 
-## 📦 Installation
+## Installation
 
-Add the JitPack repository to your `settings.gradle.kts`:
+Add JitPack to `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
@@ -65,176 +87,158 @@ dependencyResolutionManagement {
 }
 ```
 
-Then, include the desired Flare modules in your application's `build.gradle.kts`:
+Then add the module(s) you need:
 
 ```kotlin
 dependencies {
-    // Core models & queue manager (automatically transitively resolved)
-    implementation("com.github.RoxyBasicNeedBot.Flare:flare-core:v1.0.7")
+    // flare-core is pulled in transitively — no need to declare it directly
 
-    // For Traditional Android View (XML Layouts) System
+    // Traditional View system
     implementation("com.github.RoxyBasicNeedBot.Flare:flare-android:v1.0.7")
 
-    // For Jetpack Compose UI
+    // Jetpack Compose
     implementation("com.github.RoxyBasicNeedBot.Flare:flare-compose:v1.0.7")
 }
 ```
 
+> Replace `v1.0.7` with whatever tag you've actually published — check the [Releases](https://github.com/RoxyBasicNeedBot/Flare/releases) page for the latest.
+
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start
 
-### 1. Global Setup (Optional)
-Configure global defaults inside your custom `Application` class:
+### Global defaults (optional)
+
+Set these once, anywhere that runs at app startup — typically your `Application` class:
 
 ```kotlin
-import android.app.Application
-import com.roxy.flare.FlareDuration
-import com.roxy.flare.FlarePosition
-import com.roxy.flare.FlareTheme
 import com.roxy.flare.android.Flare
+import com.roxy.flare.FlarePosition
+import com.roxy.flare.FlareDuration
+import com.roxy.flare.FlareTheme
 
-class FlareApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        
-        Flare.configure {
-            defaultPosition = FlarePosition.BOTTOM
-            defaultDuration = FlareDuration.SHORT
-            hapticEnabled = true
-            theme = FlareTheme.AUTO // Synced with system dark/light configuration
-            cornerRadiusDp = 16f
-        }
-    }
+Flare.configure {
+    defaultPosition = FlarePosition.BOTTOM
+    defaultDuration = FlareDuration.SHORT
+    theme = FlareTheme.AUTO
+    hapticEnabled = true
+    cornerRadiusDp = 16f
 }
 ```
 
----
-
-### 2. Traditional Views (Builder Style)
-Trigger overlay alerts from any `Activity` with a fluent, descriptive API:
+### View system
 
 ```kotlin
-import com.roxy.flare.FlareDuration
-import com.roxy.flare.FlarePosition
-import com.roxy.flare.FlareType
 import com.roxy.flare.android.Flare
+import com.roxy.flare.FlareType
+import com.roxy.flare.FlarePosition
+import com.roxy.flare.FlareDuration
 
-// Basic usage
+// Simple
 Flare.with(activity)
     .type(FlareType.SUCCESS)
-    .message("Transaction completed successfully!")
+    .message("Profile updated")
     .show()
 
-// Advanced customization
+// With an action and a progress bar
 Flare.with(activity)
     .type(FlareType.ERROR)
-    .message("Network request failed. Please try again.")
+    .message("Couldn't reach the server")
     .position(FlarePosition.TOP)
     .duration(FlareDuration.LONG)
     .showProgressBar(true)
-    .action("Retry") {
-        performRetrySequence()
-    }
+    .action("Retry") { retryUpload() }
     .show()
 ```
 
----
+### Jetpack Compose
 
-### 3. Jetpack Compose Integration
-Embed `FlareHost` into your Composable layout and invoke alerts within a Coroutine scope:
+Wrap your screen content in `FlareHost`, then call `show { }` from a coroutine:
 
 ```kotlin
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
-import com.roxy.flare.FlareDuration
-import com.roxy.flare.FlareType
 import com.roxy.flare.compose.FlareHost
 import com.roxy.flare.compose.rememberFlareHostState
+import com.roxy.flare.FlareType
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen() {
-    val flareHostState = rememberFlareHostState()
+    val flareState = rememberFlareHostState()
     val scope = rememberCoroutineScope()
 
-    FlareHost(state = flareHostState) {
-        Scaffold { paddingValues ->
-            Button(
-                modifier = Modifier.padding(paddingValues),
-                onClick = {
-                    scope.launch {
-                        flareHostState.show {
-                            type = FlareType.WARNING
-                            message = "Low battery warning!"
-                            duration = FlareDuration.SHORT
-                            action("Dismiss") {
-                                // Action execution logic
-                            }
-                        }
-                    }
+    FlareHost(state = flareState) {
+        Button(onClick = {
+            scope.launch {
+                flareState.show {
+                    type = FlareType.WARNING
+                    message = "Low battery"
+                    action("Dismiss") { /* optional */ }
                 }
-            ) {
-                Text("Show Alert")
             }
+        }) {
+            Text("Show alert")
         }
     }
 }
 ```
 
----
+`show { }` is a suspend function — it returns a `FlareResult` (`Dismissed` or `ActionPerformed`) once the alert finishes, so you can await the outcome instead of firing and forgetting.
 
-## 🛠️ Complete Configuration API Matrix
-
-| Property | Type | Default Value | Description |
-| :--- | :--- | :--- | :--- |
-| `type` | `FlareType` | `FlareType.INFO` | Preset style presets: `SUCCESS`, `ERROR`, `WARNING`, `INFO`, `LOADING`, or `CUSTOM`. |
-| `message` | `String` | `""` | The primary text label displayed in the banner. |
-| `position` | `FlarePosition` | `FlarePosition.BOTTOM` | Alignment on viewport: `TOP`, `BOTTOM`, or `CENTER`. |
-| `duration` | `FlareDuration` | `FlareDuration.SHORT` | Lifecycle limits: `SHORT` (2000ms), `LONG` (3500ms), `INDEFINITE`, or `CUSTOM` (specified in ms). |
-| `showProgressBar` | `Boolean` | `false` | Enables a visual, draining line indicating remaining display time. |
-| `haptic` | `Boolean` | `true` | Initiates short vibration pulses upon displaying the banner. |
-| `icon` | `FlareIconType` | `FlareIconType.Default` | Custom logo overrides. Accepts Bitmaps, Drawables, or `ImageVector` instances. |
-| `animationType` | `FlareAnimationType` | `FlareAnimationType.SLIDE` | Entry transition dynamics: `SLIDE`, `FADE`, or `BOUNCE`. |
-| `customColor` | `Long?` | `null` | Hex ARGB override color (e.g., `0xFFE040FB`) for background. |
-| `queueMode` | `FlareQueueMode` | `FlareQueueMode.QUEUE` | Queue control behavior: `QUEUE` or `REPLACE`. |
+> Place a single `rememberFlareHostState()` near the root of your app (e.g. above your `NavHost`) rather than one per screen, so the same host survives navigation.
 
 ---
 
-## 🔬 Deep Technical Architecture
+## Configuration Reference
 
-### 1. The Queue Dispatcher (`flare-core`)
-At the core of Flare is a decoupled queue dispatcher. Rather than manipulating UI components directly, calling `.show()` constructs a `FlareMessage` model and registers it with the global `FlareQueue` singleton.
-The queue runs thread-safely via lock synchronization:
-* **FIFO Processing**: The system consumes queue nodes sequentially.
-* **Callback Bridging**: Active platform listeners (the `FlareWindowManager` overlay for Views or `FlareHostState` for Compose) subscribe to events, keeping the view layers completely synchronized without direct bindings.
-
-### 2. Window Insets & DecorView Overlay (`flare-android`)
-For the traditional View system:
-* Flare does not use standard Toast system resources (which are locked by OS restrictions). It overlays dynamically directly onto the host `Activity`'s root `DecorView`.
-* To prevent layout overlaps under notched screens or navigation keys, the system hooks into `ViewCompat.setOnApplyWindowInsetsListener`. It retrieves current system bounds and applies compensatory vertical padding depending on whether the banner is positioned at the `TOP` or `BOTTOM`.
-* Banners automatically register to the `Application.ActivityLifecycleCallbacks` context, guaranteeing cleanup on host destruction and eliminating memory leaks.
-
-### 3. Gesture dismissal & Spring Mechanics (`flare-compose`)
-Inside Jetpack Compose:
-* **Physics Bounds**: Gestures are driven by Compose's `Modifier.pointerInput` detecting offset drags.
-* Banners apply dynamic damping ratios. Dragging horizontal or vertical offsets translates directly into real-time translation and fade properties.
-* A fling with high velocity or an offset exceeding `50%` of screen width automatically triggers a clean exit transition. Otherwise, Compose's built-in spring animators snap the banner back to its default rest state.
+| Property | Type | Default | Notes |
+|---|---|---|---|
+| `type` | `FlareType` | `INFO` | `SUCCESS`, `ERROR`, `WARNING`, `INFO`, `LOADING`, or `CUSTOM(colorLong)` |
+| `message` | `String` | `""` | Body text, up to 4 lines before truncating |
+| `position` | `FlarePosition` | `BOTTOM` | `TOP`, `BOTTOM`, `CENTER` |
+| `duration` | `FlareDuration` | `SHORT` | `SHORT` (2000ms), `LONG` (3500ms), `INDEFINITE`, or `CUSTOM(ms)` |
+| `showProgressBar` | `Boolean` | `false` | Draining bar tied to `duration` |
+| `haptic` | `Boolean` | `true` | Short vibration on show |
+| `icon` | `FlareIconType` | `Default` | `Default`, `None`, or `Custom(icon)` — res ID, `Bitmap`, `Drawable`, `Painter`, or `ImageVector` |
+| `animationType` | `FlareAnimationType` | `SLIDE` | `SLIDE`, `FADE`, `BOUNCE` |
+| `cornerRadiusDp` | `Float?` | `12f` | Card corner radius |
+| `customColor` | `Long?` | `null` | ARGB override, e.g. `0xFFE040FB` |
+| `queueMode` | `FlareQueueMode` | `ENQUEUE` | `ENQUEUE` plays alerts in order; `REPLACE` cuts the line |
 
 ---
 
-## 📝 License
+## How It Works
 
-This project is licensed under the **BSD 3-Clause License** - see the [LICENSE](LICENSE) file for details.
+**The queue (`flare-core`).** Calling `.show()` builds a `FlareMessage` and hands it to the `FlareQueue` singleton. State transitions (what's currently showing, what's pending) are synchronized internally, and listener callbacks are always dispatched after the lock is released — so a callback is free to immediately trigger another alert without risk of deadlocking.
+
+**The View overlay (`flare-android`).** Flare doesn't use the system `Toast` API (the OS restricts what you can do with it). Instead it attaches directly to the host `Activity`'s `DecorView`, and hooks `Application.ActivityLifecycleCallbacks` to tear everything down automatically when that Activity is destroyed.
+
+**The Compose layer (`flare-compose`).** `FlareHostState` exposes the current message as Compose `State` and resolves a suspend coroutine when it's dismissed. Swipe gestures are tracked with `pointerInput`, with a spring-back animation if the drag doesn't clear roughly half the alert's width.
 
 ---
 
-<p align="center">
-  <b>Copyright (c) 2026, 𝕽𝕺𝕏𝕐•𝔹𝕒𝕤𝕚𝕔ℕ𝕖𝕖𝕕𝔹𝕠𝕥 ⚡️</b><br>
-  <i>All rights reserved. Developed with precision for maximum performance.</i>
-</p>
+## Roadmap
+
+- [ ] Kotlin Multiplatform target for `flare-core` (iOS/Desktop UI layers)
+- [ ] Compose Multiplatform host
+- [ ] Snapshot/instrumented UI tests alongside the existing `flare-core` unit tests
+
+---
+
+## Contributing
+
+Issues and PRs are welcome. For anything non-trivial, open an issue first describing what you'd like to change — saves everyone a rewrite later.
+
+```bash
+git clone https://github.com/RoxyBasicNeedBot/Flare.git
+cd Flare
+./gradlew assemble
+```
+
+---
+
+## License
+
+BSD 3-Clause — see [LICENSE](LICENSE).
+
+<p align="center"><sub>Built by <a href="https://github.com/RoxyBasicNeedBot">Roxy</a></sub></p>
