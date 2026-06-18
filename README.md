@@ -8,9 +8,10 @@
 
 **Alerts and toasts for Android, done right.**
 
-Android's built-in `Toast` can't be styled, can't queue, can't show an action button, and is increasingly restricted by the OS. Flare replaces it with a fluent, fully customizable alert system — built natively for both the **View system** and **Jetpack Compose**, sharing one platform-agnostic core.
+Android's built-in `Toast` can't be styled, can't queue, can't show action buttons, and has strict OS limitations. **Flare** replaces it with a thread-safe, fluent, fully customizable alert system built natively for both the **View system** and **Jetpack Compose**, sharing one platform-agnostic core.
 
-```
+```kotlin
+// Simple View-system call
 Flare.with(activity)
     .type(FlareType.SUCCESS)
     .message("Payment received")
@@ -19,62 +20,80 @@ Flare.with(activity)
 
 ---
 
-## Contents
-
+## 📖 Contents
 - [Features](#features)
-- [Architecture](#architecture)
+- [Architecture & Module Flow](#architecture--module-flow)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Documentation Web App](#documentation-web-app)
 - [Configuration Reference](#configuration-reference)
 - [How It Works](#how-it-works)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
 
 ## Features
 
-- 🎯 **Two native UIs, one core** — `flare-android` for the traditional View system, `flare-compose` for Jetpack Compose. Pick one or both; everything shares the same `flare-core` queue and config.
-- 🔄 **Queue or replace** — `FlareQueueMode.ENQUEUE` plays alerts back-to-back in order; `FlareQueueMode.REPLACE` instantly swaps in a new alert and drops whatever was pending.
-- 🖐️ **Real swipe-to-dismiss** — velocity-aware fling gestures with a spring-back snap if the swipe doesn't clear the threshold.
-- 🌓 **Theme-aware** — `FlareTheme.AUTO` follows the system's dark/light setting in real time, or pin it with `LIGHT` / `DARK`.
-- 📳 **Haptics with correct fallbacks** — modern `VibrationEffect` on API 26+, with a clean legacy path down to the min SDK of 24.
-- ⏱️ **Countdown progress bars** — an optional draining bar synced exactly to the alert's display duration.
-- 📐 **Edge-to-edge aware** — automatically pads around status bars, nav bars, and display cutouts via `WindowInsetsCompat`, so alerts never sit under system chrome.
-- 🧩 **Pure Kotlin core** — `flare-core` has zero Android dependencies, keeping the door open for future Kotlin Multiplatform support.
+- 🎯 **Dual UI, Single Core** — Native modules for Jetpack Compose (`flare-compose`) and Views (`flare-android`). Both hook into the platform-agnostic `flare-core` state machine.
+- 🔄 **Thread-Safe Queueing** — Sequential order execution with `FlareQueueMode.ENQUEUE`, or instant override and purge with `FlareQueueMode.REPLACE`.
+- 🖐️ **Swipe-to-Dismiss Gestures** — Velocity-aware fling dismissals with spring-back snapping.
+- 🌓 **Dynamic Themes** — Real-time dark/light syncing via `FlareTheme.AUTO` or manual dark/light overrides.
+- 📳 **Tactile Vibrations** — Precise haptic feedback using `VibrationEffect` with legacy fallbacks.
+- ⏱️ **Countdown Indicators** — Visual progress bar reflecting remaining alert duration.
+- 📐 **Cutout & Inset Aware** — Integrates with `WindowInsetsCompat` to pad around status bars, navigation bars, and display notches.
 
 ---
 
-## Architecture
+## Architecture & Module Flow
 
-Flare is split into three modules so you only pull in what you need.
+Flare separates core state machine logic from the UI representation to keep the modules lightweight and clean.
+
+### Dependency Flow
+
+```
+   ┌─────────────────────────────────────────────────────────┐
+   │                        Your App                         │
+   └────────────┬───────────────────────────────┬────────────┘
+                │                               │
+   ┌────────────▼────────────┐     ┌────────────▼────────────┐
+   │      flare-compose      │     │      flare-android      │
+   │ (Jetpack Compose Host)  │     │ (Traditional Views/XML) │
+   └────────────┬────────────┘     └────────────┬────────────┘
+                │                               │
+                └───────────────┬───────────────┘
+                                │
+                   ┌────────────▼────────────┐
+                   │       flare-core        │
+                   │ (Models, Config, Queue) │
+                   └─────────────────────────┘
+```
+
+### Flow of Execution
 
 ```mermaid
 graph TD
-    classDef core fill:#E8EAF6,stroke:#3F51B5,stroke-width:2px;
-    classDef android fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px;
-    classDef compose fill:#E1F5FE,stroke:#03A9F4,stroke-width:2px;
-    classDef app fill:#FFF3E0,stroke:#FF9800,stroke-width:2px;
+    classDef core fill:#E8EAF6,stroke:#3F51B5,stroke-width:1px;
+    classDef android fill:#E8F5E9,stroke:#4CAF50,stroke-width:1px;
+    classDef compose fill:#E1F5FE,stroke:#03A9F4,stroke-width:1px;
+    classDef app fill:#FFF3E0,stroke:#FF9800,stroke-width:1px;
 
-    Core[flare-core<br/>Models, config, thread-safe queue]:::core
-    Android[flare-android<br/>DecorView overlay, builder API]:::android
-    Compose[flare-compose<br/>FlareHost, suspend-based API]:::compose
-    App[Your app]:::app
-
-    Core --> Android
-    Core --> Compose
-    Android --> App
-    Compose --> App
+    App[Your App Code]:::app -->|1. Build & Show| Builder[Flare Builder / State]:::app
+    Builder -->|2. Register Message| Queue[FlareQueue Singleton]:::core
+    Queue -->|3. Thread-Safe Dispatch| UI[Compose / View Listeners]:::core
+    UI -->|4. Render Banner| Overlay[DecorView Overlay / HostView]:::android
+    Overlay -->|5. User Actions / Swipe| Dismiss[Dismiss Callback]:::android
+    Dismiss -->|6. Unregister & Next| Queue
 ```
 
-`flare-core` owns a single source of truth — a `FlareQueue` singleton that decides what shows next. Both UI modules just listen to it and render whatever it says is current; they never talk to each other directly.
+* `flare-core`: 100% Kotlin module containing queue logic, config presets, and models.
+* `flare-android`: Attaches overlays dynamically to the Activity's `DecorView` using spring animations.
+* `flare-compose`: Exposes state-driven Compose wrappers utilizing the suspend-based API.
 
 ---
 
 ## Installation
 
-Add JitPack to `settings.gradle.kts`:
+Add the JitPack repository to your `settings.gradle.kts` file:
 
 ```kotlin
 dependencyResolutionManagement {
@@ -87,29 +106,26 @@ dependencyResolutionManagement {
 }
 ```
 
-Then add the module(s) you need:
+Then, add the dependency to your app module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    // flare-core is pulled in transitively — no need to declare it directly
-
-    // Traditional View system
+    // Pure Kotlin core models & queue (automatically transitively resolved)
+    // Traditional View system support
     implementation("com.github.RoxyBasicNeedBot.Flare:flare-android:v1.0.7")
 
-    // Jetpack Compose
+    // Jetpack Compose UI support
     implementation("com.github.RoxyBasicNeedBot.Flare:flare-compose:v1.0.7")
 }
 ```
-
-> Replace `v1.0.7` with whatever tag you've actually published — check the [Releases](https://github.com/RoxyBasicNeedBot/Flare/releases) page for the latest.
 
 ---
 
 ## Quick Start
 
-### Global defaults (optional)
+### Global Configuration (Optional)
 
-Set these once, anywhere that runs at app startup — typically your `Application` class:
+Configure default parameters in your `Application` class:
 
 ```kotlin
 import com.roxy.flare.android.Flare
@@ -126,7 +142,7 @@ Flare.configure {
 }
 ```
 
-### View system
+### View System
 
 ```kotlin
 import com.roxy.flare.android.Flare
@@ -134,26 +150,18 @@ import com.roxy.flare.FlareType
 import com.roxy.flare.FlarePosition
 import com.roxy.flare.FlareDuration
 
-// Simple
+// Fluent builder triggers the overlay
 Flare.with(activity)
     .type(FlareType.SUCCESS)
     .message("Profile updated")
-    .show()
-
-// With an action and a progress bar
-Flare.with(activity)
-    .type(FlareType.ERROR)
-    .message("Couldn't reach the server")
-    .position(FlarePosition.TOP)
-    .duration(FlareDuration.LONG)
-    .showProgressBar(true)
-    .action("Retry") { retryUpload() }
+    .position(FlarePosition.BOTTOM)
+    .duration(FlareDuration.SHORT)
     .show()
 ```
 
 ### Jetpack Compose
 
-Wrap your screen content in `FlareHost`, then call `show { }` from a coroutine:
+Wrap your UI in `FlareHost` and call the suspend function `show`:
 
 ```kotlin
 import com.roxy.flare.compose.FlareHost
@@ -172,20 +180,38 @@ fun HomeScreen() {
             scope.launch {
                 flareState.show {
                     type = FlareType.WARNING
-                    message = "Low battery"
-                    action("Dismiss") { /* optional */ }
+                    message = "Battery Low"
                 }
             }
         }) {
-            Text("Show alert")
+            Text("Show Alert")
         }
     }
 }
 ```
 
-`show { }` is a suspend function — it returns a `FlareResult` (`Dismissed` or `ActionPerformed`) once the alert finishes, so you can await the outcome instead of firing and forgetting.
+---
 
-> Place a single `rememberFlareHostState()` near the root of your app (e.g. above your `NavHost`) rather than one per screen, so the same host survives navigation.
+## Documentation Web App
+
+We provide a premium, modern documentation website matching **Claude.ai aesthetics** containing details, interactive mobile mockups, and step-by-step guides.
+
+### Local Execution (Python Flask)
+To run the documentation server locally:
+```bash
+cd documentation
+pip install -r requirements.txt
+python app.py
+```
+Open `http://localhost:5000` in your browser.
+
+### Docker Deployment (Render/Cloud)
+To build and run the documentation website inside Docker:
+```bash
+cd documentation
+docker build -t flare-docs .
+docker run -p 5000:5000 flare-docs
+```
 
 ---
 
@@ -193,52 +219,29 @@ fun HomeScreen() {
 
 | Property | Type | Default | Notes |
 |---|---|---|---|
-| `type` | `FlareType` | `INFO` | `SUCCESS`, `ERROR`, `WARNING`, `INFO`, `LOADING`, or `CUSTOM(colorLong)` |
-| `message` | `String` | `""` | Body text, up to 4 lines before truncating |
-| `position` | `FlarePosition` | `BOTTOM` | `TOP`, `BOTTOM`, `CENTER` |
-| `duration` | `FlareDuration` | `SHORT` | `SHORT` (2000ms), `LONG` (3500ms), `INDEFINITE`, or `CUSTOM(ms)` |
-| `showProgressBar` | `Boolean` | `false` | Draining bar tied to `duration` |
-| `haptic` | `Boolean` | `true` | Short vibration on show |
-| `icon` | `FlareIconType` | `Default` | `Default`, `None`, or `Custom(icon)` — res ID, `Bitmap`, `Drawable`, `Painter`, or `ImageVector` |
-| `animationType` | `FlareAnimationType` | `SLIDE` | `SLIDE`, `FADE`, `BOUNCE` |
-| `cornerRadiusDp` | `Float?` | `12f` | Card corner radius |
-| `customColor` | `Long?` | `null` | ARGB override, e.g. `0xFFE040FB` |
-| `queueMode` | `FlareQueueMode` | `ENQUEUE` | `ENQUEUE` plays alerts in order; `REPLACE` cuts the line |
+| `type` | `FlareType` | `INFO` | `SUCCESS`, `ERROR`, `WARNING`, `INFO`, `LOADING`, or `CUSTOM` |
+| `message` | `String` | `""` | The text content (max 4 lines before truncation) |
+| `position` | `FlarePosition` | `BOTTOM` | Viewport placement: `TOP`, `BOTTOM`, `CENTER` |
+| `duration` | `FlareDuration` | `SHORT` | `SHORT` (2s), `LONG` (3.5s), `INDEFINITE`, or `CUSTOM(ms)` |
+| `showProgressBar` | `Boolean` | `false` | Smooth draining bar synced to remaining duration |
+| `haptic` | `Boolean` | `true` | Tactile device vibrations upon displaying |
+| `animationType` | `FlareAnimationType`| `SLIDE` | Entry transition physics: `SLIDE`, `FADE`, `BOUNCE` |
+| `cornerRadiusDp` | `Float?` | `12f` | Card layout corner rounding |
+| `customColor` | `Long?` | `null` | Hex color ARGB code (e.g. `0xFFE040FB`) |
+| `queueMode` | `FlareQueueMode` | `ENQUEUE` | Queue processing rules: `ENQUEUE` or `REPLACE` |
 
 ---
 
 ## How It Works
 
-**The queue (`flare-core`).** Calling `.show()` builds a `FlareMessage` and hands it to the `FlareQueue` singleton. State transitions (what's currently showing, what's pending) are synchronized internally, and listener callbacks are always dispatched after the lock is released — so a callback is free to immediately trigger another alert without risk of deadlocking.
-
-**The View overlay (`flare-android`).** Flare doesn't use the system `Toast` API (the OS restricts what you can do with it). Instead it attaches directly to the host `Activity`'s `DecorView`, and hooks `Application.ActivityLifecycleCallbacks` to tear everything down automatically when that Activity is destroyed.
-
-**The Compose layer (`flare-compose`).** `FlareHostState` exposes the current message as Compose `State` and resolves a suspend coroutine when it's dismissed. Swipe gestures are tracked with `pointerInput`, with a spring-back animation if the drag doesn't clear roughly half the alert's width.
-
----
-
-## Roadmap
-
-- [ ] Kotlin Multiplatform target for `flare-core` (iOS/Desktop UI layers)
-- [ ] Compose Multiplatform host
-- [ ] Snapshot/instrumented UI tests alongside the existing `flare-core` unit tests
-
----
-
-## Contributing
-
-Issues and PRs are welcome. For anything non-trivial, open an issue first describing what you'd like to change — saves everyone a rewrite later.
-
-```bash
-git clone https://github.com/RoxyBasicNeedBot/Flare.git
-cd Flare
-./gradlew assemble
-```
+* **Thread-Safe State Machine**: Banners are managed via a thread-safe synchronized queue wrapper in `flare-core`. Listeners receive show/dismiss notifications only after the queue releases its synchronizing locks, preventing callbacks from triggering lock-order deadlocks.
+* **Views Overlay**: Directly queries the Activity's `window.decorView` and inserts the programmatic layouts overlaying existing View hierarchies. Uses standard `VibrationEffect` and `SpringAnimation` objects dynamically.
+* **Compose State Wrapper**: Translates queue status changes directly into Compose recompositions while gestures handle translation changes on the screen using pointer input tracking.
 
 ---
 
 ## License
 
-BSD 3-Clause — see [LICENSE](LICENSE).
+Licensed under the **BSD 3-Clause License** - see [LICENSE](LICENSE) for details.
 
-<p align="center"><sub>Built by <a href="https://github.com/RoxyBasicNeedBot">Roxy</a></sub></p>
+<p align="center"><sub>Developed with precision by <a href="https://github.com/RoxyBasicNeedBot">Roxy</a></sub></p>

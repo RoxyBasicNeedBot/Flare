@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Flare | Production-Grade Android Toast & Alert Library</title>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="light-theme">
+    
+    <!-- Top Premium Navbar -->
+    <header class="navbar">
+        <div class="nav-left">
+            <span class="logo-icon">⚡</span>
+            <span class="logo-text">Flare</span>
+            <span class="version-badge">{{ version }}</span>
+        </div>
+        <div class="nav-right">
+            <button id="theme-toggle" class="icon-btn" title="Toggle Light/Dark Mode">
+                <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0-9a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1zm0 18a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1zM5.636 4.222a1 1 0 0 1 1.414 0l1.414 1.414a1 1 0 1 1-1.414 1.414L5.636 5.636a1 1 0 0 1 0-1.414zm11.314 11.314a1 1 0 0 1 1.414 0l1.414 1.414a1 1 0 0 1-1.414 1.414l-1.414-1.414a1 1 0 0 1 0-1.414zM2 12a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1zm16 0a1 1 0 0 1 1-1h2a1 1 0 0 1 0 2h-2a1 1 0 0 1-1-1zM5.636 19.778a1 1 0 0 1 0-1.414l1.414-1.414a1 1 0 1 1 1.414 1.414l-1.414 1.414a1 1 0 0 1-1.414 0zm11.314-11.314a1 1 0 0 1 0-1.414l1.414-1.414a1 1 0 0 1 1.414 1.414l-1.414 1.414a1 1 0 0 1-1.414 0z"/></svg>
+                <svg class="moon-icon" viewBox="0 0 24 24"><path d="M12.3 22c5.3 0 9.7-4.4 9.7-9.7 0-4.3-2.9-8.1-7-9.3-.5-.1-1 .3-.9.8.7 2.8-.2 5.7-2.3 7.8s-5.1 3-7.8 2.3c-.5-.1-.9.4-.8.9 1.2 4.1 5 7 9.3 7z"/></svg>
+            </button>
+            <a href="https://github.com/RoxyBasicNeedBot/Flare" target="_blank" class="github-btn">
+                <svg viewBox="0 0 24 24" class="github-icon"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                GitHub
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-layout">
+        
+        <!-- Left Sidebar (Claude Styled Navigation) -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <div class="menu-section">
+                    <h3>Getting Started</h3>
+                    <ul>
+                        <li><a href="#introduction" class="active">Introduction</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#installation">Installation</a></li>
+                        <li><a href="#quick-start">Quick Start</a></li>
+                    </ul>
+                </div>
+                <div class="menu-section">
+                    <h3>Architecture</h3>
+                    <ul>
+                        <li><a href="#under-the-hood">How It Works</a></li>
+                        <li><a href="#thread-safety">Queue & Thread Safety</a></li>
+                        <li><a href="#android-views">View Overlays</a></li>
+                        <li><a href="#compose-gestures">Compose Gestures</a></li>
+                    </ul>
+                </div>
+                <div class="menu-section">
+                    <h3>API Reference</h3>
+                    <ul>
+                        <li><a href="#config-reference">Configuration Matrix</a></li>
+                        <li><a href="#advanced-usage">Advanced Features</a></li>
+                    </ul>
+                </div>
+                <div class="menu-section">
+                    <h3>Deployment</h3>
+                    <ul>
+                        <li><a href="#deploy-render">Render & Docker Setup</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Center Main Content -->
+        <main class="content">
+            
+            <!-- Section: Introduction -->
+            <section id="introduction" class="doc-section">
+                <h1 class="hero-title">Alerts & Toasts for Android, <em>done right.</em></h1>
+                <p class="lead">
+                    Android's native <code>Toast</code> API is rigid, unstylable, and constrained by modern OS restrictions. 
+                    <strong>Flare</strong> is a lightweight, zero-XML notification library engineered to provide beautiful, responsive banners 
+                    across both Jetpack Compose and traditional Android Views.
+                </p>
+                <div class="accent-card">
+                    <strong>💡 Zero-XML Footprint:</strong> Flare draws vector icons and progress countdown indicators programmatically, keeping your app binary size extremely lean (< 2KB core size).
+                </div>
+            </section>
+
+            <!-- Section: Features -->
+            <section id="features" class="doc-section">
+                <h2>Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <span class="f-icon">🎯</span>
+                        <h4>Unified Platform Core</h4>
+                        <p>Write your configurations once. UI integrations are completely decoupled, sharing one core state engine.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="f-icon">🔄</span>
+                        <h4>Thread-Safe Queue</h4>
+                        <p>Queue notifications sequentially or replace active banners instantly with lock-free notification threads.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="f-icon">🖐️</span>
+                        <h4>Swipe to Dismiss</h4>
+                        <p>Fluid, physics-based dragging mechanics. Fling to dismiss or snap back with organic spring bounds.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="f-icon">🌓</span>
+                        <h4>Dynamic Theme Engine</h4>
+                        <p>Real-time dark/light mode detection corresponding with system UI modes or user configuration overlays.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Installation -->
+            <section id="installation" class="doc-section">
+                <h2>Installation</h2>
+                <p>Add the JitPack maven URL inside your root <code>settings.gradle.kts</code> file:</p>
+                <pre><code class="language-kotlin">dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}</code></pre>
+                
+                <p>Include the native target dependency inside your module level <code>build.gradle.kts</code>:</p>
+                <pre><code class="language-kotlin">dependencies {
+    // For Traditional Android XML / View Layouts
+    implementation("com.github.RoxyBasicNeedBot.Flare:flare-android:{{ version }}")
+
+    // For Jetpack Compose UI
+    implementation("com.github.RoxyBasicNeedBot.Flare:flare-compose:{{ version }}")
+}</code></pre>
+            </section>
+
+            <!-- Section: Quick Start -->
+            <section id="quick-start" class="doc-section">
+                <h2>Quick Start</h2>
+                <div class="tab-container">
+                    <div class="tab-headers">
+                        <button class="tab-link active" onclick="switchTab(event, 'view-code')">Android View Builder</button>
+                        <button class="tab-link" onclick="switchTab(event, 'compose-code')">Jetpack Compose Host</button>
+                    </div>
+                    
+                    <div id="view-code" class="tab-content active">
+                        <p>Launch banners directly from any <code>Activity</code> context using a fluent builder syntax:</p>
+                        <pre><code class="language-kotlin">import com.roxy.flare.android.Flare
+import com.roxy.flare.FlareType
+import com.roxy.flare.FlarePosition
+import com.roxy.flare.FlareDuration
+
+Flare.with(activity)
+    .type(FlareType.SUCCESS)
+    .message("Transaction Completed!")
+    .position(FlarePosition.TOP)
+    .duration(FlareDuration.LONG)
+    .showProgressBar(true)
+    .action("Undo") {
+        performUndo()
+    }
+    .show()</code></pre>
+                    </div>
+                    
+                    <div id="compose-code" class="tab-content">
+                        <p>Wrap your container inside <code>FlareHost</code> and trigger alerts cleanly from coroutine scopes:</p>
+                        <pre><code class="language-kotlin">import com.roxy.flare.compose.FlareHost
+import com.roxy.flare.compose.rememberFlareHostState
+import com.roxy.flare.FlareType
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+
+@Composable
+fun MainScreen() {
+    val flareState = rememberFlareHostState()
+    val scope = rememberCoroutineScope()
+
+    FlareHost(state = flareState) {
+        Button(onClick = {
+            scope.launch {
+                flareState.show {
+                    type = FlareType.ERROR
+                    message = "Connection Lost!"
+                    action("Retry") {
+                        reconnect()
+                    }
+                }
+            }
+        }) {
+            Text("Show Alert")
+        }
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: How It Works -->
+            <section id="under-the-hood" class="doc-section">
+                <h2>How It Works</h2>
+                <p>Flare is structured to optimize responsiveness, thread-safety, and UI separation. The lifecycle of a banner flows through three distinct layers:</p>
+                
+                <h3 id="thread-safety">1. Thread-Safe State Machine</h3>
+                <p>
+                    Calling <code>.show()</code> constructs a immutable <code>FlareMessage</code> model and submits it to the global <code>FlareQueue</code> singleton.
+                    Operations are guarded internally using a synchronized lock object (<code>stateLock</code>). 
+                    To prevent callbacks from causing deadlocks in re-entrant threads (such as calling a new show request immediately on dismiss), 
+                    all callbacks are gathered and dispatched <strong>outside</strong> the synchronized lock context.
+                </p>
+
+                <h3 id="android-views">2. DecorView Window Overlay</h3>
+                <p>
+                    Rather than dealing with Toast restrictions, <code>flare-android</code> hooks into the active Activity's window <code>DecorView</code>. 
+                    It applies compensating spacing calculations dynamically utilizing <code>WindowInsetsCompat</code> to wrap around status notches and navigation bars.
+                    Activity lifecycle hooks are registered automatically to dismiss active overlays during destruction, guaranteeing zero memory leaks.
+                </p>
+
+                <h3 id="compose-gestures">3. Compose Pointer Gestures</h3>
+                <p>
+                    In Compose layouts, gestures are processed using <code>Modifier.pointerInput</code> velocity trackers. 
+                    Alert containers adjust horizontal and vertical visual translations relative to touch drag metrics. 
+                    Dragging beyond 50% width triggers an exit transition, while smaller drags snap the banner back into resting bounds using Compose physics-spring specs.
+                </p>
+            </section>
+
+            <!-- Section: Configuration Reference -->
+            <section id="config-reference" class="doc-section">
+                <h2>Configuration Reference</h2>
+                <p>Customize banner layouts using parameters supported in both Views and Jetpack Compose configurations:</p>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Default</th>
+                                <th>Behavior</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>type</code></td>
+                                <td><code>FlareType</code></td>
+                                <td><code>INFO</code></td>
+                                <td>Alert presets: <code>SUCCESS</code>, <code>ERROR</code>, <code>WARNING</code>, <code>INFO</code>, <code>LOADING</code>, or <code>CUSTOM</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>message</code></td>
+                                <td><code>String</code></td>
+                                <td><code>""</code></td>
+                                <td>Display text contents. Auto-ellipsized after 4 lines.</td>
+                            </tr>
+                            <tr>
+                                <td><code>position</code></td>
+                                <td><code>FlarePosition</code></td>
+                                <td><code>BOTTOM</code></td>
+                                <td>Location: <code>TOP</code> (notch offset), <code>BOTTOM</code> (nav offset), <code>CENTER</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>duration</code></td>
+                                <td><code>FlareDuration</code></td>
+                                <td><code>SHORT</code></td>
+                                <td>Auto-dismiss timer: <code>SHORT</code> (2s), <code>LONG</code> (3.5s), <code>INDEFINITE</code>, or <code>CUSTOM(ms)</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>showProgressBar</code></td>
+                                <td><code>Boolean</code></td>
+                                <td><code>false</code></td>
+                                <td>Enables visual, draining countdown indicator synced to timer.</td>
+                            </tr>
+                            <tr>
+                                <td><code>haptic</code></td>
+                                <td><code>Boolean</code></td>
+                                <td><code>true</code></td>
+                                <td>Triggers haptic feedback upon presentation.</td>
+                            </tr>
+                            <tr>
+                                <td><code>animationType</code></td>
+                                <td><code>FlareAnimationType</code></td>
+                                <td><code>SLIDE</code></td>
+                                <td>Transitions: <code>SLIDE</code> (spring translation), <code>FADE</code>, <code>BOUNCE</code>.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Section: Deploying to Render -->
+            <section id="deploy-render" class="doc-section">
+                <h2>Deploying to Render via Docker</h2>
+                <p>This documentation portal is containerized for simple one-click deployment on platforms like Render.</p>
+                <h3>Render Setup Instructions</h3>
+                <ol>
+                    <li>Create a new <strong>Web Service</strong> on <a href="https://render.com" target="_blank">Render</a>.</li>
+                    <li>Connect your GitHub repository containing this project.</li>
+                    <li>Set <strong>Environment</strong> to <code>Docker</code>.</li>
+                    <li>Set the <strong>Docker Context</strong> and <strong>Dockerfile Path</strong> to:
+                        <ul>
+                            <li>Docker Context: <code>.</code> (Root)</li>
+                            <li>Dockerfile Path: <code>documentation/Dockerfile</code></li>
+                        </ul>
+                    </li>
+                    <li>Render will build and deploy the container automatically, serving it on port 5000.</li>
+                </ol>
+            </section>
+
+            <footer class="doc-footer">
+                <p>Copyright &copy; 2026, 𝕽𝕺𝕏𝕐•𝔹𝕒𝕤𝕚𝕔ℕ𝕖𝕖𝕕𝔹𝕠𝕥 ⚡️. Licensed under BSD 3-Clause License.</p>
+            </footer>
+        </main>
+
+        <!-- Right Sidebar (Interactive Claude Simulator Mockup) -->
+        <aside class="right-sidebar">
+            <div class="simulator-wrapper">
+                <h3>Interactive Playground</h3>
+                <p class="sim-help">Try Flare components directly on the simulated device below.</p>
+                
+                <!-- Mockup Android Phone -->
+                <div class="android-mock">
+                    <div class="bezel">
+                        <div class="camera-notch"></div>
+                        <div class="phone-screen">
+                            <!-- Simulated Wallpaper -->
+                            <div class="screen-wallpaper">
+                                <div class="mock-status-bar">
+                                    <span class="mock-time">09:41</span>
+                                    <span class="mock-icons">📶 🔋</span>
+                                </div>
+                                <div class="mock-home-indicator"></div>
+                                
+                                <!-- Flare Simulated Alert Container -->
+                                <div id="simulated-alert" class="sim-alert hidden">
+                                    <div class="sim-alert-content">
+                                        <span class="sim-alert-icon" id="sim-icon">ℹ️</span>
+                                        <div class="sim-alert-text">
+                                            <strong id="sim-title">Info</strong>
+                                            <p id="sim-desc">Hello World!</p>
+                                        </div>
+                                        <button class="sim-alert-action" id="sim-action">Undo</button>
+                                    </div>
+                                    <div class="sim-alert-progress" id="sim-progress"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulator Controls -->
+                <div class="sim-controls">
+                    <div class="control-group">
+                        <label for="ctrl-type">Alert Type</label>
+                        <select id="ctrl-type">
+                            <option value="SUCCESS">Success (✓)</option>
+                            <option value="ERROR">Error (✗)</option>
+                            <option value="WARNING">Warning (⚠)</option>
+                            <option value="INFO" selected>Info (ℹ)</option>
+                            <option value="LOADING">Loading (spinner)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="ctrl-position">Position</label>
+                        <select id="ctrl-position">
+                            <option value="TOP" selected>Top (Notch Offset)</option>
+                            <option value="CENTER">Center</option>
+                            <option value="BOTTOM">Bottom (Navbar Offset)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="ctrl-msg">Message</label>
+                        <input type="text" id="ctrl-msg" value="Operation successful!">
+                    </div>
+
+                    <div class="control-group checkbox-group">
+                        <input type="checkbox" id="ctrl-progress" checked>
+                        <label for="ctrl-progress">Show Progress countdown bar</label>
+                    </div>
+
+                    <button id="trigger-btn" class="primary-btn">Trigger Alert</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
